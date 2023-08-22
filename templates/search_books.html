@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Search Books</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Navigation menu -->
+    {% include 'nav_menu.html' %}
+
+    <div class="container mt-5">
+        <!-- Search Books Form -->
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                    <h2>Search Books</h2>
+                <form action="{{ url_for('search_results') }}" method="GET">
+                    <div class="form-group">
+                        <label for="searchTerm">Search by ISBN or Title</label>
+                        <input type="text" class="form-control" id="searchTerm" name="searchTerm" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select class="form-control" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a href="{{ url_for('search_results') }}" class="btn btn-secondary ml-2">Search All</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
