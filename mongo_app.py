@@ -11,9 +11,9 @@ app.secret_key = 'xyzsdfg'
 
 # Initialize MongoDB client
 client = MongoClient("mongodb+srv://admin:password101@interactivequizdb.x3sik2a.mongodb.net/")
-db = client.get_database("bookstore_db")
-users_collection = db.user
-
+db = client.get_database("users")
+users_collection = db.users
+questions_collection = db.questions
 
 def is_user_logged_in():
     return 'user_id' in session
@@ -85,6 +85,56 @@ def register():
 
     return render_template('register.html', message=message, first_name=first_name)
 
-   
+
+@app.route('/question', methods=['GET', 'POST'])
+def question():
+    #ensure user is logged in to add question
+    user_logged_in = is_user_logged_in()
+    if user_logged_in:
+        # Fetch the username based on user_id
+        user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+        if user:
+            first_name = user.get('first_name')
+            last_name = user.get('last_name')
+        else:
+            render_template('login.html', message='You must login to add a question!')
+
+    if request.method == 'POST':
+        question = request.form.get('question')
+        answer = request.form.get('answer')
+        category = request.form.get('category')
+        dificulty = request.form.get('dificulty')
+
+        #User must insert a integer (x)  with conditions so that : 0 < x < 5
+        try:
+            #assert its an int
+            value = int(dificulty)
+            #check to see if the conditions are satisfied
+            if value < 0 and value > 5 and not isinstance(value, int):
+                print("Input satisfies the conditions.")
+            else:
+                print("Input does not satisfy the conditions.")
+        #Users input is not a valid int
+        except ValueError:
+            print("Input is not a valid number.")
+
+        if not all(['question', 'answer']):
+            message = 'Please insert at least a question and its answer!'
+        elif questions_collection.find_one({'question': question}):
+            message = 'Question already exists!'
+        else:
+            question_data = {
+                'question': question,
+                'answer': answer,
+                'category': category,
+                'dificulty': dificulty
+            }
+            questions_collection.insert_one(question_data)
+            message = 'You have successfully added a question!'
+            
+    #Change this to make sure that we use the correct react page
+    return render_template('nav_menu.html', message=message, first_name=first_name)
+
+
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
