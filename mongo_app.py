@@ -11,8 +11,9 @@ app.secret_key = 'xyzsdfg'
 
 # Initialize MongoDB client
 client = MongoClient("mongodb+srv://admin:password101@interactivequizdb.x3sik2a.mongodb.net/")
-db = client.get_database("bookstore_db")
-users_collection = db.user
+db = client.get_database("users")
+users_collection = db.users
+questions_collection = db.questions
 
 
 def is_user_logged_in():
