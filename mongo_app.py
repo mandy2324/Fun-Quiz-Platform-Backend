@@ -19,19 +19,6 @@ questions_collection = db.questions
 def is_user_logged_in():
     return 'user_id' in session
 
-# @app.route('/index')
-# def index():
-#     first_name = None
-#     last_name = None
-#     user_logged_in = is_user_logged_in()
-#     if user_logged_in:
-#         # Fetch the username based on user_id
-#         user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-#         if user:
-#             first_name = user.get('first_name')
-#             last_name = user.get('last_name')
-#     return render_template('index.html', user_logged_in=user_logged_in, first_name=first_name, last_name=last_name)
- 
 @app.route('/check-login', methods=['GET'])
 def check_login():
     if 'user_id' in session:
