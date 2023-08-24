@@ -63,6 +63,9 @@ def logout():
     session.pop('user_id', None)
     return jsonify({"message": "Logout successful."}), 200
 
+
+
+
 #creating restful friendly endpoints to interact with postman/react
 @app.route('/register', methods=['POST'])
 def register():
@@ -139,6 +142,6 @@ def create_question():
     return jsonify({"message": "Question added successfully."}), 201
 
 
-
+# Flask App.run:
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
