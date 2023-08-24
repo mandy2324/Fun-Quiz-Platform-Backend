@@ -3,10 +3,11 @@ from pymongo import MongoClient
 import re
 import bcrypt
 from bson import ObjectId
+from flask_cors import CORS
 
  
 app = Flask(__name__)
-
+CORS(app) # i do not know if this chaged anything but feel free to take out
 app.secret_key = 'xyzsdfg'
 
 # Initialize MongoDB client
@@ -51,39 +52,40 @@ def login():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('index'))
- 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    message = ''
-    first_name = None
-    if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        if not all([first_name, last_name, username, email, password]):
-            message = 'Please fill out all the fields!'
-        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-            message = 'Invalid email address!'
-        elif users_collection.find_one({'email': email}):
-            message = 'Account already exists!'
-        else:
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            user_data = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'username': username,
-                'email': email,
-                'password': hashed_password  # Store the hashed password as bytes
-            }
-            users_collection.insert_one(user_data)
-            message = 'You have successfully registered!'
-            
-            return redirect(url_for('login', registration_success=True))
 
-    return render_template('register.html', message=message, first_name=first_name)
+#creating restful friendly endpoints to interact with postman/react
+@app.route('/register', methods=['POST'])
+def register():
+    #data will be in Json format
+    data = request.get_json()
+    #if not in appropriate format or missing, send a message
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+
+    #grabbing the json attributes for user
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([first_name, last_name, username, email, password]):
+        return jsonify({"message": "Please fill out all the fields!"}), 400
+    elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+        return jsonify({"message": "Invalid email address!"}), 400
+    elif users_collection.find_one({'email': email}):
+        return jsonify({"message": "Account already exists!"}), 409  # Conflict status code
+    else:
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        user_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'username': username,
+            'email': email,
+            'password': hashed_password  # Store the hashed password as bytes
+        }
+        users_collection.insert_one(user_data)
+        return jsonify({"message": "You have successfully registered!"}), 201  # Created status code
 
 
 @app.route('/question', methods=['GET', 'POST'])
