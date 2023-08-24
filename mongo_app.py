@@ -19,39 +19,62 @@ questions_collection = db.questions
 def is_user_logged_in():
     return 'user_id' in session
 
-@app.route('/index')
-def index():
-    first_name = None
-    last_name = None
-    user_logged_in = is_user_logged_in()
-    if user_logged_in:
-        # Fetch the username based on user_id
-        user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-        if user:
-            first_name = user.get('first_name')
-            last_name = user.get('last_name')
-    return render_template('index.html', user_logged_in=user_logged_in, first_name=first_name, last_name=last_name)
+# @app.route('/index')
+# def index():
+#     first_name = None
+#     last_name = None
+#     user_logged_in = is_user_logged_in()
+#     if user_logged_in:
+#         # Fetch the username based on user_id
+#         user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+#         if user:
+#             first_name = user.get('first_name')
+#             last_name = user.get('last_name')
+#     return render_template('index.html', user_logged_in=user_logged_in, first_name=first_name, last_name=last_name)
  
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/check-login', methods=['GET'])
+def check_login():
+    if 'user_id' in session:
+        user_id = session['user_id']
+        user = users_collection.find_one({'_id': ObjectId(user_id)})
+        if user:
+            user_info = {
+                "logged_in": True,
+                "user": {
+                    "first_name": user.get('first_name'),
+                    "last_name": user.get('last_name'),
+                    # Add other user details
+                }
+            }
+            return jsonify(user_info), 200
+    return jsonify({"logged_in": False}), 200
+
+
+@app.route('/login', methods=['POST'])
 def login():
-    registration_success = request.args.get('registration_success')
-    
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = users_collection.find_one({'username': username})
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            session['user_id'] = str(user['_id'])
-            return redirect(url_for('index'))
-        else:
-            return render_template('login.html', message='Invalid credentials')
-    return render_template('login.html', registration_success=registration_success)
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"message": "Username and password are required fields."}), 400
+
+    user = users_collection.find_one({'username': username})
+    if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
+        session['user_id'] = str(user['_id'])
+        return jsonify({"message": "Login successful."}), 200
+    else:
+        return jsonify({"message": "Invalid credentials."}), 401  # Unauthorized status code
 
  
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
-    return redirect(url_for('index'))
+    return jsonify({"message": "Logout successful."}), 200
 
 #creating restful friendly endpoints to interact with postman/react
 @app.route('/register', methods=['POST'])
@@ -88,54 +111,46 @@ def register():
         return jsonify({"message": "You have successfully registered!"}), 201  # Created status code
 
 
-@app.route('/question', methods=['GET', 'POST'])
-def question():
-    #ensure user is logged in to add question
-    user_logged_in = is_user_logged_in()
-    if user_logged_in:
-        # Fetch the username based on user_id
-        user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-        if user:
-            first_name = user.get('first_name')
-            last_name = user.get('last_name')
-        else:
-            render_template('login.html', message='You must login to add a question!')
+@app.route('/questions', methods=['POST'])
+def create_question():
+    if not is_user_logged_in():
+        return jsonify({"message": "You must be logged in to add a question."}), 401
 
-    if request.method == 'POST':
-        question = request.form.get('question')
-        answer = request.form.get('answer')
-        category = request.form.get('category')
-        dificulty = request.form.get('dificulty')
+    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    if not user:
+        return jsonify({"message": "You must be logged in to add a question."}), 401
 
-        #User must insert a integer (x)  with conditions so that : 0 < x < 5
-        try:
-            #assert its an int
-            value = int(dificulty)
-            #check to see if the conditions are satisfied
-            if value < 0 and value > 5 and not isinstance(value, int):
-                print("Input satisfies the conditions.")
-            else:
-                print("Input does not satisfy the conditions.")
-        #Users input is not a valid int
-        except ValueError:
-            print("Input is not a valid number.")
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
 
-        if not all(['question', 'answer']):
-            message = 'Please insert at least a question and its answer!'
-        elif questions_collection.find_one({'question': question}):
-            message = 'Question already exists!'
-        else:
-            question_data = {
-                'question': question,
-                'answer': answer,
-                'category': category,
-                'dificulty': dificulty
-            }
-            questions_collection.insert_one(question_data)
-            message = 'You have successfully added a question!'
-            
-    #Change this to make sure that we use the correct react page
-    return render_template('nav_menu.html', message=message, first_name=first_name)
+    question = data.get('question')
+    answer = data.get('answer')
+    category = data.get('category')
+    difficulty = data.get('difficulty')
+
+    try:
+        value = int(difficulty)
+        if value < 0 or value > 5:
+            return jsonify({"message": "Difficulty value must be between 0 and 5."}), 400
+    except ValueError:
+        return jsonify({"message": "Invalid difficulty value."}), 400
+
+    if not question or not answer:
+        return jsonify({"message": "Please insert at least a question and its answer."}), 400
+
+    if questions_collection.find_one({'question': question}):
+        return jsonify({"message": "Question already exists."}), 409
+
+    question_data = {
+        'question': question,
+        'answer': answer,
+        'category': category,
+        'difficulty': difficulty
+    }
+    questions_collection.insert_one(question_data)
+    return jsonify({"message": "Question added successfully."}), 201
+
 
 
 if __name__ == "__main__":
