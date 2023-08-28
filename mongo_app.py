@@ -19,6 +19,7 @@ questions_collection = db.questions
 def is_user_logged_in():
     return 'user_id' in session
 
+#Check if user session is true
 @app.route('/check-login', methods=['GET'])
 def check_login():
     if 'user_id' in session:
@@ -36,7 +37,7 @@ def check_login():
             return jsonify(user_info), 200
     return jsonify({"logged_in": False}), 200
 
-
+#User Login
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -57,13 +58,14 @@ def login():
     else:
         return jsonify({"message": "Invalid credentials."}), 401  # Unauthorized status code
 
- 
+# User Logout 
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     return jsonify({"message": "Logout successful."}), 200
 
 #creating restful friendly endpoints to interact with postman/react
+# User registration
 @app.route('/register', methods=['POST'])
 def register():
     #data will be in Json format
@@ -97,7 +99,8 @@ def register():
         users_collection.insert_one(user_data)
         return jsonify({"message": "You have successfully registered!"}), 201  # Created status code
 
-
+#Questions Endpoint
+#Create Question
 @app.route('/questions', methods=['POST'])
 def create_question():
     if not is_user_logged_in():
@@ -138,7 +141,13 @@ def create_question():
     questions_collection.insert_one(question_data)
     return jsonify({"message": "Question added successfully."}), 201
 
+#Delete Question
+#Update Question
 
+#Quiz Endpoints
+#Get Question : Custom query to get a number of questions 
+#Get Question by difficulty : Query questions that have a difficulty specified
+#Get Question by Category: Query Questions from a specific category
 
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
