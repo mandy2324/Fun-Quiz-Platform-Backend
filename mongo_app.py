@@ -64,6 +64,9 @@ def logout():
     session.pop('user_id', None)
     return jsonify({"message": "Logout successful."}), 200
 
+
+
+
 #creating restful friendly endpoints to interact with postman/react
 # User registration
 @app.route('/register', methods=['POST'])
