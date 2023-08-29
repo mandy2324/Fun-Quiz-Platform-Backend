@@ -191,6 +191,115 @@ def get_question_list():
 #Get Question : Custom query to get a number of questions 
 #Get Question by difficulty : Query questions that have a difficulty specified
 #Get Question by Category: Query Questions from a specific category
+=======
+#Update Question
+
+#Quiz Endpoints
+#Get Question : Custom query to get a number of questions 
+#Get Question by difficulty : Query questions that have a difficulty specified
+#Get Question by Category: Query Questions from a specific category
+
+@app.route('/get-questions-by-category', methods=['GET'])
+def get_questions_by_catagory():
+    category = request.args.get('category')
+
+    query = {}
+    if category:
+        query['category'] = category
+    else:
+        return jsonify({"message": "Invalid category value."}), 400
+    questions = questions_collection.find(query)
+
+    question_list = []
+    for question in questions:
+        question_list.append({
+            "question": question.get('question'),
+            "answer": question.get('answer'),
+            "category": question.get('category'),
+            "difficulty": question.get('difficulty')
+        })
+
+    return jsonify(question_list), 200
+#Using a POST
+@app.route('/get-questions-by-category', methods=['POST'])
+def get_questions_by_catagory_2():
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+
+    category = data.get('category')
+
+    query = {}
+    if category:
+        query['category'] = category
+    else:
+        return jsonify({"message": "Invalid category value."}), 400
+    questions = questions_collection.find(query)
+
+    question_list = []
+    for question in questions:
+        question_list.append({
+            "question": question.get('question'),
+            "answer": question.get('answer'),
+            "category": question.get('category'),
+            "difficulty": question.get('difficulty')
+        })
+
+    return jsonify(question_list), 200
+
+@app.route('/get-questions-by-difficulty', methods=['POST'])
+def get_questions_by_difficulty():
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+
+    difficulty = data.get('difficulty')
+    query = {}
+    if difficulty:
+        query['difficulty'] = difficulty
+    else:
+        return jsonify({"message": "Invalid difficulty value."}), 400
+
+    questions = questions_collection.find(query)
+
+    question_list = []
+    for question in questions:
+        question_list.append({
+            "question": question.get('question'),
+            "answer": question.get('answer'),
+            "category": question.get('category'),
+            "difficulty": question.get('difficulty')
+        })
+
+    return jsonify(question_list), 200
+
+@app.route('/get-questions-both', methods=['POST'])
+def get_questions():
+    data = request.get_json()
+    category = data.get('category')
+    difficulty = data.get('difficulty')
+
+    query = {}
+    if category:
+        query['category'] = category
+    if difficulty:
+        query['difficulty'] = difficulty
+
+    questions = questions_collection.find(query)
+
+    question_list = []
+    for question in questions:
+        question_list.append({
+            "question_text": question.get('question'),
+            "answer": question.get('answer'),
+            "category": question.get('category'),
+            "difficulty": question.get('difficulty')
+            # Add other question details
+        })
+
+    return jsonify(question_list), 200
+
 
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
