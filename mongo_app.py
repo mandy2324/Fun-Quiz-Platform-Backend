@@ -142,6 +142,56 @@ def create_question():
     return jsonify({"message": "Question added successfully."}), 201
 
 #Delete Question
+@app.route('/questions/delete', methods=['POST'])
+def delete_question():
+    if not is_user_logged_in():
+        return jsonify({"message": "You must be logged in to delete a question."}), 401
+    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+
+    if not user:
+        return jsonify({"message": "You must be logged in to delete a question."}), 401
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+    question = data.get('question')
+    if not question:
+        return jsonify({"message": "Please provide the question to delete."}), 400
+
+
+    deleted_question = questions_collection.find_one_and_delete({'question': question})
+    if not deleted_question:
+        return jsonify({"message": "Question not found."}), 404
+
+    return jsonify({"message": "Question deleted successfully."}), 200
+
+@app.route('/quiz/list', methods=['GET'])
+def get_question_list():
+    if not is_user_logged_in():
+        return jsonify({"message": "You must be logged in to add a question."}), 401
+
+    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    
+    questions = list(questions_collection.find({}))  # Fetch all questions from the collection
+    question_list = []
+
+    for question in questions:
+        question_item = {
+            'question': question['question'],
+            'answer': question['answer'],
+            'category': question['category'],
+            'difficulty': question['difficulty']
+        }
+        question_list.append(question_item)
+
+    return jsonify(question_list), 200
+
+
+#Quiz Endpoints
+#Get Question : Custom query to get a number of questions 
+#Get Question by difficulty : Query questions that have a difficulty specified
+#Get Question by Category: Query Questions from a specific category
+=======
 #Update Question
 
 #Quiz Endpoints
@@ -249,6 +299,7 @@ def get_questions():
         })
 
     return jsonify(question_list), 200
+
 
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
