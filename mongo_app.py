@@ -22,6 +22,7 @@ def is_user_logged_in():
 #Check if user session is true
 @app.route('/check-login', methods=['GET'])
 def check_login():
+    print("Checking login status...")
     if 'user_id' in session:
         user_id = session['user_id']
         user = users_collection.find_one({'_id': ObjectId(user_id)})
@@ -35,6 +36,7 @@ def check_login():
                 }
             }
             return jsonify(user_info), 200
+        print("User is not logged in.") 
     return jsonify({"logged_in": False}), 200
 
 #User Login
@@ -170,11 +172,13 @@ def delete_question():
 
 @app.route('/quiz/list', methods=['GET'])
 def get_question_list():
-    if not is_user_logged_in():
-        return jsonify({"message": "You must be logged in to add a question."}), 401
+    print(request.headers)
+    # if not is_user_logged_in():
+    #     return jsonify({"message": "You must be logged in to add a question."}), 401
 
-    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-    
+    # user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    # print("User:", user) 
+
     questions = list(questions_collection.find({}))  # Fetch all questions from the collection
     question_list = []
 
@@ -194,7 +198,6 @@ def get_question_list():
 #Get Question : Custom query to get a number of questions 
 #Get Question by difficulty : Query questions that have a difficulty specified
 #Get Question by Category: Query Questions from a specific category
-=======
 #Update Question
 
 #Quiz Endpoints
