@@ -198,12 +198,6 @@ def get_question_list():
 #Get Question : Custom query to get a number of questions 
 #Get Question by difficulty : Query questions that have a difficulty specified
 #Get Question by Category: Query Questions from a specific category
-#Update Question
-
-#Quiz Endpoints
-#Get Question : Custom query to get a number of questions 
-#Get Question by difficulty : Query questions that have a difficulty specified
-#Get Question by Category: Query Questions from a specific category
 
 @app.route('/get-questions-by-category', methods=['GET'])
 def get_questions_by_catagory():
@@ -306,6 +300,66 @@ def get_questions():
 
     return jsonify(question_list), 200
 
+# Need an endpoint to retrieve user object Id
+@app.route('/get-user-id', methods=['GET'])
+def get_user_id_get():
+    username = request.args.get('username')  # this would take the user based on params in the route
+    
+    if username:
+        user = users_collection.find_one({'username': username})
+        if user:
+            user_id = str(user['_id'])
+            return jsonify({'user_id': user_id}), 200
+    return jsonify({'message': 'User not found'}), 404
+
+@app.route('/get-user-id', methods=['POST']) #based on a post
+def get_user_id_post():
+    data = request.get_json()
+    username = data.get("username")
+    if username:
+        user = users_collection.find_one({'username': username})
+        if user:
+            user_id = str(user['_id'])
+            return jsonify({'user_id': user_id}), 200
+    return jsonify({'message': 'User not found'}), 404
+
+
+# Need an endpoint to retrieve question object Id
+#using Get request with params
+@app.route('/get-question-id', methods=['GET'])
+def get_question_id_get():
+    question = request.args.get('question')
+    
+    if question:
+        question = questions_collection.find_one({'question': question})
+        if question:
+            question_id = str(question['_id'])
+            return jsonify({'question_id': question_id}), 200
+    return jsonify({'message': 'Question not found'}), 404
+
+#using post
+@app.route('/get-question-id', methods=['POST'])
+def get_question_id_post():
+    data = request.get_json()
+    question = data.get("question")
+    if question:
+        question = questions_collection.find_one({'question': question})
+        if question:
+            question_id = str(question['_id'])
+            return jsonify({'question_id': question_id}), 200
+    return jsonify({'message': 'Question not found'}), 404
+
+
+# Need an endpoint for getting pool of answers (3 random, 1 correct) based on question 
+# Get Answer based on Question
+
+# Get Answer based on Question Object ID
+
+# Get 3 Random Answers from DB, get the question answer and randomize order. Send back in json
+
+ 
+# Need an endpoint to get User score
+# Need an endpoint to update User's highest quiz score
 
 if __name__ == "__main__":
     app.run(host='localhost', port=5001, debug=True)
