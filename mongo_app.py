@@ -106,12 +106,12 @@ def register():
 #Create Question
 @app.route('/questions', methods=['POST'])
 def create_question():
-    if not is_user_logged_in():
-        return jsonify({"message": "You must be logged in to add a question."}), 401
+    # if not is_user_logged_in():
+    #     return jsonify({"message": "You must be logged in to add a question."}), 401
 
-    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-    if not user:
-        return jsonify({"message": "You must be logged in to add a question."}), 401
+    # user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    # if not user:
+    #     return jsonify({"message": "You must be logged in to add a question."}), 401
 
     data = request.get_json()
     if not data:
@@ -147,12 +147,12 @@ def create_question():
 #Delete Question
 @app.route('/questions/delete', methods=['POST'])
 def delete_question():
-    if not is_user_logged_in():
-        return jsonify({"message": "You must be logged in to delete a question."}), 401
-    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    # if not is_user_logged_in():
+    #     return jsonify({"message": "You must be logged in to delete a question."}), 401
+    # user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
 
-    if not user:
-        return jsonify({"message": "You must be logged in to delete a question."}), 401
+    # if not user:
+    #     return jsonify({"message": "You must be logged in to delete a question."}), 401
     data = request.get_json()
     
     if not data:
@@ -170,10 +170,10 @@ def delete_question():
 
 @app.route('/quiz/list', methods=['GET'])
 def get_question_list():
-    if not is_user_logged_in():
-        return jsonify({"message": "You must be logged in to add a question."}), 401
+    # if not is_user_logged_in():
+    #     return jsonify({"message": "You must be logged in to add a question."}), 401
 
-    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    # user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
     
     questions = list(questions_collection.find({}))  # Fetch all questions from the collection
     question_list = []
@@ -345,6 +345,53 @@ def get_question_id_post():
             return jsonify({'question_id': question_id}), 200
     return jsonify({'message': 'Question not found'}), 404
 
+#Get 10 random questions
+
+@app.route('/get-random-questions', methods=['GET'])
+def get_random_questions():
+    pipeline = [{'$sample': {'size': 10}}]
+    random_questions = list(questions_collection.aggregate(pipeline))
+
+    question_list = []
+    for question in random_questions:
+        question_item = {
+            'question': question['question'],
+            'answer': question['answer'],
+            'category': question['category'],
+            'difficulty': question['difficulty']
+        }
+        question_list.append(question_item)
+
+    return jsonify(question_list), 200
+
+
+#Score keeping, check answer. front end wil give me a question, user answer, score
+@app.route('/check-answer', methods=['POST'])
+def check_answer():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"message": "Request data missing."}), 400
+
+    question= data.get('question')
+    user_answer = data.get('user_answer')
+    score = data.get('score')
+
+    if not question or not user_answer:
+        return jsonify({"message": "Please provide both question and user_answer."}), 400
+
+    question = questions_collection.find_one({'question': question})
+    if not question:
+        return jsonify({"message": "Question not found."}), 404
+
+    correct_answer = question['answer'].lower()  # Convert correct answer to lowercase
+    user_answer_lower = user_answer.lower()  # Convert user's answer to lowercase
+
+    if user_answer_lower == correct_answer:
+        score += 1
+        return jsonify({"message": "Correct answer!", "score": score}), 200
+    else:
+        return jsonify({"message": "Incorrect answer. Try again!"}), 200
 
 # Need an endpoint for getting pool of answers (3 random, 1 correct) based on question 
 # Get Answer based on Question
